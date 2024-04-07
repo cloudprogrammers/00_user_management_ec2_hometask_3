@@ -1,36 +1,48 @@
 # Linux Users and Groups Management
-Welcome to this comprehensive exercise series designed to guide you through creating a practical, real-world Bash script for managing user accounts on a Linux system. Throughout these exercises, you will develop a script that not only creates user accounts with superuser privileges but also intelligently handles input arguments to set usernames and comments, and even auto-generates passwords for account security. 
-
-The goal is to craft a fully functional script that embodies best practices in script development, error handling, and security measures. By the end of this series, you will have a robust tool at your disposal for efficiently managing user accounts—a skill set highly relevant in various IT and cloud computing roles.
+Welcome to our tutorial series where you'll learn about managing users and groups on an AWS EC2 instance. This series is designed to give you practical experience with both Linux and AWS, focusing on the essential tasks of user management in a cloud computing environment. By the end of these tutorials, you'll know how to create and manage user accounts on a Linux system running on AWS, and you'll be more comfortable working with cloud services.
 
 ## _What you will learn_
 
-- **Script Execution with Superuser Privileges** Understand the importance of running scripts with superuser privileges for tasks requiring system modifications, and how to check for and enforce this within your scripts.
-- **Command Line Argument Handling** Dive into processing command line arguments to enhance script flexibility. Learn how to use the first argument as a username and concatenate remaining arguments as a comment for the account, adapting your script to varied input scenarios.
-- **Effective User Feedback and Usage Instructions** Craft clear, helpful usage instructions and feedback messages within your scripts. This ensures users understand how to utilize your script correctly and are informed of any errors or necessary actions.
+- **Superuser Privileges on EC2**  You will understand the critical role of running scripts with superuser privileges, especially for tasks that change the system, and how to check for these privileges in your scripts.
+- **Handling Command Line Arguments on EC2** Learn how to parse command line arguments to make your scripts more flexible. This includes using the first argument as a username and the rest as a comment for the user account.
+- **Secure Access and File Transfer via SSH** We'll cover how to set up SSH access for newly created users. This is important for securely transferring files between your local computer and the EC2 instance using SCP.
+- **Interacting with EC2 Instance Metadata** You'll learn how to access and use EC2 instance metadata within your scripts. This is useful for scripts that need information about the instance they're running on.
 
 ## Prerequisites
-Before you start, make sure you have the following installed:
-
-- AWS CLI installed and configured on your computer with appropriate permissions to manage EC2 instances. [AWS CLI Configuration Guide](https://link-url-here.org)
+Before starting, make sure you have:
+- An AWS account with access to create and manage EC2 instances.
 - At least one EC2 instance available and running in your AWS account.
+- A basic understanding of terminal commands and access to SSH and SCP tools on your local machine.
 
 # EXERCISES
 
 ## Exercise 1: Introduction to Linux Users and Groups
 
 **Objective**
-Explore the process of managing users and groups in Linux. By creating a new user and group, you'll understand their roles and the impact of permissions on system security.
+Learn how to manage users and groups on an AWS EC2 Linux instance. This exercise will guide you through creating a user and a group on your EC2 instance, setting permissions, and testing access control.
 
-**Task 1: Creating a New User and Group:**
-**Create a New Group** Start by creating a new group named **heroes**. Use the command:
+**Task 1: Log Into AWS Console and SSH into Your EC2 Instance**
+
+Log into your AWS Management Console and navigate to the EC2 Dashboard. Find your running EC2 instance.
+**Get Instance Details** Click on your instance to view its details. Locate and click the `Connect` button in the top right hand corner of the console window. Then, click the `SSH client` option and copy the connection command that is at the bottom. It should look like this:
+
+```
+ssh -i "id_rsa" ubuntu@ec2-51-21-77-247.eu-north-1.compute.amazonaws.com
+```
+
+**Execute the SSH Command** Follow the `Connect to instance` instruction and check if you established a successful connection to your EC2 instance via SSH.
+
+**Task 2: Creating a New User and Group:**
+
+**1. Create New group:** 
+Start by creating a new group named **heroes** on your EC2 instance. Use the command:
 ```sh
 sudo groupadd heroes
 ```
-[Shebang Explained](https://docs.google.com/document/d/1xOhWo0Wz0ur-8l34e8K4DtKxyQ8dyvVNinGC7kgSF5U/edit#heading=h.t9kotiz18puv)
 
 **2. Create a New User:** 
 Now, create a new user named **hero** and add them to the **heroes** group. Use the **-m** option to create a home directory for the user, and **-G** to specify the group:
+
 ```sh
 sudo useradd -m -G heroes hero
 ```
@@ -39,7 +51,18 @@ sudo useradd -m -G heroes hero
 ```
 sudo passwd hero
 ```
-**Task 2: Working with Directories and Permissions**
+
+**What we did so far ?**
+
+**Created a Group:** You created a new group named `heroes`. Groups in Linux are used to organize users with similar access rights or responsibilities. By managing groups, you can easily assign permissions to multiple users, enhancing both security and convenience.
+
+**Added a New User:** You introduced a new user named `hero` to the system and assigned them to the `heroes` group. Creating users is fundamental in Linux for assigning specific access rights, running processes, and maintaining security. The `-m` option ensured that hero got a home directory, a space where user-specific files and configurations reside.
+
+**Set a Password:** You secured the hero user account with a password, a crucial step for authentication and access control.
+
+The purpose of these actions is twofold. Firstly, it helps you understand how Linux handles access control and user management—a core aspect of system administration. Secondly, performing these tasks on an AWS EC2 instance introduces you to managing cloud-based Linux environments
+
+**Task 3: Working with Directories and Permissions**
 
 **1. Create a Directory and File:** 
 First, navigate to the **/tmp** directory. We will be making our experiment here. It's a catalog for all temporary stuff.
@@ -53,7 +76,8 @@ echo "Hello there!" > hero_files/message.txt
 ```
 
 **Set Group Ownership and Permissions:**
-Change the ownership of `hero_files` and its contents to belong to the heroes group.
+Change the ownership and permissions so only members of the `heroes` group can read and write to the directory.
+
 ```
 sudo chown :heroes hero_files/
 ```
@@ -63,7 +87,12 @@ sudo chmod 770 hero_files/
 sudo chmod 660 hero_files/message.txt
 ```
 
-**Task 3: Test the Access Control**
+**Summary**
+Now, you learned to manage file permissions and group ownership within your EC2 Linux environment, essential for controlling access to system resources.
+
+You created a `hero_files/` directory and set its permissions and ownership to ensure only members of the `heroes` group could read and write to it.
+
+**Task 4: Test the Access Control**
 
 Attempt to read and write to `message.txt` as a user not in the heroes group. You should be denied access in both cases:
 ```
@@ -71,7 +100,7 @@ cat /tmp/hero_files/message.txt # READ operation
 echo "New message" > /tmp/hero_files/message.txt # WRITE operation
 ```
 
-How do we solve this ? 
+**How do we solve this ?** 
 Well, we have 2 options. Only users who belong to `heroes` group can read, write and execute the files inside `/tmp/hero_files` directory.
 First, we can switch now to the user which belongs to the `heroes` group:
 ```
@@ -79,13 +108,11 @@ su - hero
 ```
 And try to access files. Do it now, and see what effect does it have on the command output. 
 
-The second option is to add the current user to `heroes` group. By doing this, the user we are logged as in, will gain all the privileges that the `heroes` group has. 
+The **second** option is to add the current user to `heroes` group. By doing this, the user we are logged as in, will gain all the privileges that the `heroes` group has. 
 Use the `whoami` command to display the current username.
 ```
 whoami
-```
-Alternatively, the id command provides more detailed information about the user, including their groups.
-```
+# or
 id
 ```
 
@@ -95,10 +122,16 @@ Adding the current user to the heroes group will grant them the permissions asso
 Use the usermod command to add your current user to the heroes group. You'll need to replace <your-username> with the username you identified in Step 1.
 ```
 sudo usermod -aG heroes <your-username>
+
 ```
 Note: The `-aG` option appends the user to the specified group without removing them from their existing groups.
+You can combine above command with the previous one, using `command substitution`
 
-**Test the Access Control Again** :
+```
+sudo usermod -aG heroes $(whoami)
+```
+
+**Verify and Test Access Again** :
 After adding your user to the heroes group, you need to log out and log back in for the group changes to take effect. This is necessary because the current session does not automatically refresh group memberships.
 **Log Out and Log In:**
 Depending on your environment, logging out and back in can be done through the GUI or by closing and reopening your terminal session.
@@ -117,6 +150,12 @@ echo "New message" >> /tmp/hero_files/message.txt
 cat /tmp/hero_files/message.txt
 ```
 To go further, see [the study material](https://docs.google.com/document/d/14oAojwZD8ULcECaUFB4dqbmuZb2K-c05tKXaKY1bZwk/edit?usp=sharing) for information why write and format in bash this way.
+
+**Summary**
+You tested the effectiveness of Linux file permissions and group ownership by attempting to access the hero_files directory before and after adjusting your group membership.
+
+This exercise demonstrated the immediate impact of permissions and group ownership on file access, illustrating a practical aspect of system security.
+By switching users and modifying group memberships, you experienced firsthand how Linux enforces access controls based on user and group associations.
 
 ## Exercise 2: Building a User Management Script - Part 1
 **Objective**
