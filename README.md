@@ -28,6 +28,8 @@ Log into your AWS Management Console and navigate to the EC2 Dashboard. Find you
 
 ```
 ssh -i "id_rsa" ubuntu@ec2-51-21-77-247.eu-north-1.compute.amazonaws.com
+# or
+ssh -i "id_rsa" ubuntu@<public ipv4> 
 ```
 
 **Execute the SSH Command** Follow the `Connect to instance` instruction and check if you established a successful connection to your EC2 instance via SSH.
