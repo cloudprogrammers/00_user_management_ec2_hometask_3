@@ -11,7 +11,7 @@ Welcome to our tutorial series where you'll learn about managing users and group
 ## Prerequisites
 Before starting, make sure you have:
 - An AWS account with access to create and manage EC2 instances.
-- At least one EC2 instance available and running in your AWS account.
+- At least one EC2 instance available and running in your AWS account. <link to script>
 - A basic understanding of terminal commands and access to SSH and SCP tools on your local machine.
 
 # EXERCISES
