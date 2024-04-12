@@ -159,151 +159,159 @@ You tested the effectiveness of Linux file permissions and group ownership by at
 This exercise demonstrated the immediate impact of permissions and group ownership on file access, illustrating a practical aspect of system security.
 By switching users and modifying group memberships, you experienced firsthand how Linux enforces access controls based on user and group associations.
 
-## Exercise 2: Building a User Management Script - Part 1
+**Task 5: Setting Up SSH Access for the New User**
+
 **Objective**
-This exercise is designed to guide you through the initial steps of creating a Bash script for user management on a Linux system. You'll start with a script structure that checks for superuser privileges and reads user input. Your task is to complete the script by adding a user based on the provided input, managing the password, and ensuring the user changes the password at the first login.
+Learn how to configure SSH access for the newly created hero user on your AWS EC2 instance. 
 
-**1. Handle User Input** :
-Here's the initial structure of your script, add-local-user.sh. This part of the script ensures it's run with superuser privileges and collects necessary information from the user:
-**Task:** Understand why it's crucial to run certain scripts with superuser privileges, especially when modifying system settings or managing user accounts. 
-Before going further, see [the study material](https://docs.google.com/document/d/1gMYi7TxPrvmNcBsFKtygX6Sy0uiidkMfSDDO8XnX0kk/edit?usp=sharing).
+**1 Generating SSH Keys (on your local machine):**
+First, you need to generate a new SSH key pair to use for hero. Open a terminal and run:
 
 ```
-#!/bin/bash
-
-# Ensure the script is run with superuser privileges
-if [[ "${UID}" -ne 0 ]]; then
-    echo 'Please run the script using sudo or as a root.'
-    exit 1 # Exit with an error
-fi
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/hero_key
 ```
 
-**2: Reading User Input**
-**Task 1:** You will be creating an account with data collected from user.
-Here is a quick refresher on how to parse user input and save it to variable.
+This command creates a new SSH key pair stored in the `~/.ssh/hero_key` (private key) and `~/.ssh/hero_key.pub` (public key) files.
+
+**2. Uploading the Public Key to Your EC2 Instance**
+To allow hero to log in via SSH, you must add the public key to the ~/.ssh/authorized_keys file in the hero user's home directory on your EC2 instance.
+
+1. SSH into your EC2 instance using your regular method (e.g., as ec2-user).
+2. Switch to the hero user:
 
 ```
-# Prompt for user input
-read -p 'Enter the username to create: ' USER_NAME
-read -p 'Enter the name of the person or application that will be using this account: ' COMMENT
-read -p 'Enter the password to use for the account: ' PASSWORD
+sudo su - hero
 ```
 
-**2: Create user and password**
-
-**Task 1:** 
-Add the User: Use the collected input (`USER_NAME` and `COMMENT`) to add a new user to the system. Remember to create a home directory for the user.
+3. Check if the `~/.ssh` directory exists:
 ```
-useradd -c "${COMMENT}" -m ${USER_NAME}
+cd ~/.ssh
 ```
-
-**Task 2:** Check if `useradd` Succeeded. 
-This is your part. 
-You need to verify in the script, whether the user creation process succeeded.
-Here is the
-[material for reference.](https://docs.google.com/document/d/1rjk55kJ_JVwFoNCq018LBULVIjBkWHYj3N5Z0bk4a4o/edit?usp=sharing)
-
-**Task 3:** Set the User Password
-Securely add the password for the newly created account. Be cautious of how you handle the password in your script.
-
+4. If it does not exist, create it:
 ```
-echo ${PASSWORD} | passwd --stdin ${USER_NAME}
+mkdir ~/.shh
+```
+5. Append the public key to the `~/.ssh/authorized_keys` file. Replace your_public_key with the content of your hero_key.pub file. First, copy the contents of your public key (from your local machine):
+```
+cat ~/.ssh/id_rsa.pub
+```
+the name of the key may be different, but it will be `.pub` file for sure.
+6. Put the content of your public key into `authorized_keys` file on your EC2
+```
+echo your_public_key >> ~/.ssh/authorized_keys
 ```
 
-**Task 4:**
-This is your part. 
-Your goal is to complete and test out the working script.
->Requirements:
-**1.** Ensure the Password Add Was Successful
-Similar to step 2, check the success of the password assignment and notify if there's an error.
-**1.** Enforce Password Change on First Login
-Use the `passwd` command to force the user to change their password the next time they log in.
-**1.** Display Account Details
-Similar to step 2, check the success of the password assignment and notify if there's an error.
-
-**Testing:** Test your script with different inputs to ensure it behaves as expected under various scenarios.
-
-
-## Exercise 3: Building a User Management Script - Part 2
+## Exercise 2: Building a basic Bash script 
 **Objective**
-Refine your user management script by adjusting it to accept the command-line arguments instead of relying on capturing user input. Incorporate a usage statement that guides the user on how to properly execute the script, especially when required arguments, like the account name, are missing. This exercise teaches you to improve script usability and provide clearer communication in your tools, an essential skill for script development and user support.
+Develop a Bash script that interacts with AWS EC2 instance metadata and executes commands based on user input. This exercise will help you understand how to script interactions with a Linux environment and retrieve metadata from an EC2 instance, enhancing your scripting skills for cloud operations.
 
 **Tasks**
 
-**Task 1:** Check for the Presence of an Account Name
-Modify the Script to Check Arguments:
-Immediately after ensuring the script is run with superuser privileges, add a check to see if an account name was provided as an argument.
-If not, display a usage statement and exit with status 1.
+**1. Logging Into Your EC2 Instance:**
+Start by SSH into your EC2 instance using the hero user and the SSH key you set up in the previous task:
+```
+ssh -i ~/.ssh/hero_key hero@Your-Instance-IP
+```
+Ensure you replace Your-Instance-IP with the actual public IP of your EC2 instance.
+
+**Task:** Understand why it's crucial to run certain scripts with superuser privileges, especially when modifying system settings or managing user accounts. 
+Before going further, see [the study material](https://docs.google.com/document/d/1gMYi7TxPrvmNcBsFKtygX6Sy0uiidkMfSDDO8XnX0kk/edit?usp=sharing).
+
+**2 2. Creating the Script:**
+Open vim to start writing your script:
 
 ```
-if [[ "${#}" -lt 1]]; then
-    echo "Usage: ${0} USER_NAME [COMMENT]..."
-    echo "Create an account on the local system with the name of USER_NAME and a name of person or application that will use the script with COMMENT."
-    echo "Example: ${0} test_user test_user@company.com"
-    exit 1
+vim ec2_manager.sh
+```
+
+**3. Script Setup:**
+Start your script with the shebang line and set it to execute using Bash:
+```
+#!/bin/bash
+```
+Shebang (#!): Is the first line in your script, telling the system which interpreter to use to execute the script. For shell scripts, this is typically #!/bin/bash or #!/usr/bin/env bash Here you have everything explained about it:
+[Shebang Explained.](https://docs.google.com/document/d/1xOhWo0Wz0ur-8l34e8K4DtKxyQ8dyvVNinGC7kgSF5U/)
+
+**2. Make your script executable:**
+
+```
+chmod +x ec2_manager.sh.
+```
+
+**3. Implementing the Menu:** 
+Use the `echo` command to print each option to the terminal. The `echo` command in shell scripting is used to display lines of text or string variables. It's one of the most basic and frequently used commands in shell scripting. After displaying each option, you'll want to capture the user's choice. This is done using the `read` command, which reads a single line from standard input (i.e., the user's keyboard input) and assigns it to a variable. In this case, you could use read -p `"Enter choice: "` choice to prompt the user directly and store their input in a variable named `choice`
+
+```
+echo "Select an operation:"
+echo "1) Launch htop on instance"
+echo "2) Launch tcpdump utility on instance"
+echo "3) Show EC2 instance metadata"
+read -p "Enter choice: " choice
+```
+
+**4. Run the script**
+Verify it prompts the user for input. Fire it up several times. Test out each option. For now, it does not do anything.
+
+**5. Processing User Input:**
+Now, we will be adding the required features for each of the options that user may choose. The `if` conditional lets us specify the condition under which the code will run. We will test it out, by covering the case where the user types in 1, choosing from the menu above.
+
+```
+if [ "$choice" == "1" ]; then
+```
+To go further, see the [study material](https://docs.google.com/document/d/14oAojwZD8ULcECaUFB4dqbmuZb2K-c05tKXaKY1bZwk/) for information why write and format in bash this way. You will gain deeper understanding on how to deal with variables in Bash.
+
+After this, add a test `echo` command, to see whether the logic works:
+
+```
+if [ "$choice" == "1" ]; then
+    echo "User chosen option $choice"
+fi
+```
+run the script typing in `./ec2_manager.sh`, select `1` as an input and see if it works and what value it returns.
+
+**6. Replace the logic inside the first if statement**
+Now, we want to replace the logic inside the `if` statement with actual feature we want to use. 
+```
+if [ "$choice" == "1" ]; then
+    echo "Launching htop..."
+    htop
 fi
 ```
 
-See, that we use one of the [special variables.](https://docs.google.com/document/d/1rjk55kJ_JVwFoNCq018LBULVIjBkWHYj3N5Z0bk4a4o/edit?usp=sharing) in Linux to reach our goal.
-We also use `-lt` which means literally `less than`.
+**7. Implement remaining features**
+Now, we need to expand our `if` conditional to cover the remaining cases. We do it using `elif` and `else` statements.
 
-**Task 2**: Clear Usage Statement 
-Modify the message
-
->"Create an account.." 
-
-to better fit your particular taste. You can provide clearer examples.
-
-**Task 3** Test your script:
-* Attempt to run your script without supplying an account name to ensure that your usage statement is displayed as expected.
-* Execute the script with an account name to verify that it proceeds as when the necessary information is provided.
-
-
-**Task 4** Dynamically assign variables:
-* Assign the first argument as the username
 ```
-USER_NAME="${1}"
-```
-
-Use all remaining arguments as the comment for the account
-The `shift` command shifts the positional parameters to the left, making $2 become $1, $3 become $2, etc.
-Here, it's used to remove the first argument (username) from the list, leaving only the comment.
- ```
-shift
-COMMENT="${*}"
-```
-* Now proceed to create the user with the parsed username and comment
-```
-useradd -c "${COMMENT}" -m ${USER_NAME}
+if [ "$choice" == "1" ]; then
+    echo "Launching htop..."
+    htop
+elif [ "$choice" == "2" ]; then
+    echo "Launching tcpdump..."
+    tcpdump
+elif [ "$choice" == "3" ]; then
+    echo "Retrieving instance metadata.."
+    # Metadata token retrieval
+    TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+    # Fetching metadata
+    METADATA=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/)
+    echo "$METADATA"
+fi
 ```
 
-## Exercise 4: Building a User Management Script - Part 3 - generate strong, random passwords
+**8. Saving and Testing the Script:**
+Save your script in `vim` and test it out. Start it several times, trying each of the options the scipt offers.
 
-This set of exercises builds upon your existing script by utilizing command line arguments for user and comment input and make the password generation automatic for the new account. These features improve user experience, ensure security of the passwords and increase automation level.
-
-**Objective**
-Implement a feature to automatically generate a password for the new account.
-
-**Tasks:**
-* Implement a function or a one-liner within your script to generate a random password.
-* Ensure the password meets common security criteria (length, complexity).
+**Summary**
+In this exercise, you created a Bash script that leverages the EC2 instance metadata API and responds dynamically to user input, executing different system commands.
 
 # Key Points to Remember
 
-**Difference between system and regular users** System users are created to run specific services, while regular users are created for human users or to run specific applications.
+**1. Script Permissions and the Use of Shebang (#!)**
+Scripts need to be executable to run. Using `chmod +x scriptname.sh` changes the script's permissions, making it executable. The shebang `(#!)` at the beginning of scripts specifies the interpreter, ensuring scripts run under the correct environment.
 
-**Group management:** Groups are used to organize users that share common access and permission requirements.
-Essential options when creating user accounts: The useradd command includes several options that are crucial for customizing the creation of user accounts.
+** Capturing and Processing User Input:**
+User input handling, through read commands or script parameters, enables interactive scripts and dynamic execution paths based on user decisions. It enhances the script's flexibility and user-friendliness.
 
-**Superuser Privileges** Essential for scripts that alter system configurations or manage user accounts to ensure they execute with the necessary permissions.
-
-**Handling User Input** Mastery in processing command-line arguments for setting usernames and comments enhances script versatility and user experience.
-
-**Error Handling** Implementing checks for command execution status (${?}) and providing informative feedback are crucial for robust scripts.
-
-**Usage Statements** Clear, informative usage statements guide users on proper script execution, improving usability and reducing errors.
-
-**Command Substitution and Special Variables** Utilizing Bash features like command substitution ($(...)) and special variables (**$1**, **$@**, etc.) allows for dynamic and flexible script operations.
 
 # Commands Reference
 
