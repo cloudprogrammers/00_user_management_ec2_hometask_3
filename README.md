@@ -11,7 +11,7 @@ Welcome to our tutorial series where you'll learn about managing users and group
 ## Prerequisites
 Before starting, make sure you have:
 - An AWS account with access to create and manage EC2 instances.
-- At least one EC2 instance available and running in your AWS account. <link to script>
+- At least one EC2 instance available and running in your AWS account.
 - A basic understanding of terminal commands and access to SSH and SCP tools on your local machine.
 
 # EXERCISES
@@ -28,8 +28,6 @@ Log into your AWS Management Console and navigate to the EC2 Dashboard. Find you
 
 ```
 ssh -i "id_rsa" ubuntu@ec2-51-21-77-247.eu-north-1.compute.amazonaws.com
-# or
-ssh -i "id_rsa" ubuntu@<public ipv4> 
 ```
 
 **Execute the SSH Command** Follow the `Connect to instance` instruction and check if you established a successful connection to your EC2 instance via SSH.
@@ -317,11 +315,9 @@ User input handling, through read commands or script parameters, enables interac
 
 | Command | Description |
 | ------ | ------ |
-| `useradd` | Creates a new user account on the system. |
-| `passwd` | Sets or changes the password for a user account |
-| `echo` | Displays a line of text; used here for providing feedback or setting passwords. |
-| `if, [[ ]]` | Conditional statements; essential for error checking and flow control. |
-| `shift` | Shifts positional parameters; useful for processing command-line arguments beyond the first one. |
-| `$(...)` | Command substitution; allows the capture of command output and store them in variables. |
-| `/dev/urandom` | Provides random bytes; useful for generating secure passwords. |
-| `tr, fold, head` | Text processing commands; used in combination to filter and select password characters. |
+| `ssh -i ~/.ssh/hero_key hero@Your-Instance-IP` | Connects to an EC2 instance using SSH with the specified key and user. |
+| `vim ec2_info.sh` | Opens the Vim editor to create or edit a script file named ec2_info.sh. |
+| `chmod +x ec2_info.sh` | Makes the script executable. |
+| `./ec2_info.sh <option>` | Runs the script |
+| `curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` | Requests a new token for accessing the EC2 instance metadata with a specified TTL (Time To Live). |
+| `curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/` | Uses the obtained token to fetch metadata from the EC2 instance. |
