@@ -250,7 +250,14 @@ cd ~/.ssh
 ```
 mkdir ~/.shh
 ```
-5. Append the public key to the `~/.ssh/authorized_keys` file. Replace your_public_key with the content of your hero_key.pub file. First, copy the contents of your public key (from your local machine):
+5. Set the permissions so that only `hero` user can modify contents of the `.ssh` directory:
+
+```
+sudo chown hero:hero ./ssh -R 
+```
+**Note:** `-R` option tells us that `chown` (or any other) command applies recursively to all files inside the `.ssh/` directory.
+
+6. Append the public key to the `~/.ssh/authorized_keys` file. Replace your_public_key with the content of your hero_key.pub file. First, copy the contents of your public key (from your local machine):
 ```
 cat ~/.ssh/hero_key.pub
 ```
@@ -259,6 +266,25 @@ the name of the key may be different, but it will be `.pub` file for sure.
 ```
 echo your_public_key >> ~/.ssh/authorized_keys
 ```
+**Note**: Replace the `your_public_key` with actual string representing the public key. 
+
+So, the command will look like this:
+```
+echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCpz1II7O8NlrG/MwwEmXjZIVinOodISpmGijeV9DE8f1Bjps3IX3QUPTgKFAPRsO/mTjNo7QMKaKmmA24xgsNMyCt/CWX7F5au9fThvc4/fKXIayIr7D34F8cPxvSKQ7noPFErTRd/fuRjto57X5dsRlPlOZj3MJXA0RfL++weI/8/3zBYSRd5uDbT5uQKNShLnbnflr5yAFenQVwxLRCt7VJBJCx06g7m4NNyelcKxP8YCagKv58C3nVY3SHf3fgRpTOXdPDUlhY5PM/VbsjDb7nsRsFr9HeabLHEalcXxDhI4gUjpvFs3qI3yO/7a1SJG0WLYUQII9nFdTtc875Un0vAUhp/ZaiVKQKG1SAjACYitcjousW7I6jOIKZ5nrMc2DwDKanH8w3CrvkY2y6jrNnPqE++SpYgo4w4n4Ew2vK9jbCi1oMMF8C9azKUfPwqp0UWYXMKq9vm8/SPL8m+0JoNPoU0zW2yhXR8+K5SZxJOO54M9xj3Ve7F+FEAWYg0QVkzn2CPTXsg49/+plpD+tAf7Kc+96jT1PmGupaS4fTAH8rIi9qCJA61osLnw4HQpX6wxLG7kcijPuLDTTYfW732MljZtxhXU9VBvo+G53l4F5GDSNbbAQDh3h0XIXy9OZTPjWoqwAyfR4k+hHz7WSQwaIfjQPe03YDM4YXpZ4w== email@example.com > ~/.ssh/authorized_keys
+```
+set the permissions:
+
+```
+sudo chmod 600 ~/.ssh/authorized_keys
+```
+
+7. **Test the connection** on your local machine, test the connection. Go to the directory where your private key is stored (probably `~/.ssh` directory) and connect to EC2, changing the private key used to connect as well as user name:
+
+```
+ssh -i hero_key hero@ec2-51-20-89-90.eu-north-1.compute.amazonaws.com
+```
+
+**Expectation:** You should be able to successfuly log into the EC2 machine.
 
 ## Exercise 2: Building a basic Bash script 
 **Objective**
@@ -284,6 +310,7 @@ vim ec2_manager.sh
 ```
 
 **3. Script Setup:**
+Type `i` to go into `insert` mode in vim.
 Start your script with the shebang line and set it to execute using Bash:
 ```
 #!/bin/bash
