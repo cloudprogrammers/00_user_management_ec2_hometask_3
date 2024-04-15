@@ -32,6 +32,12 @@ ssh -i "id_rsa" ubuntu@ec2-51-21-77-247.eu-north-1.compute.amazonaws.com
 
 **Execute the SSH Command** Follow the `Connect to instance` instruction and check if you established a successful connection to your EC2 instance via SSH.
 
+Once you successfuly connect to your EC2 instance from your computer **Change the shell type** to `bash` (it will look cooler and more readable, and allows for autocomplete):
+
+```
+bash
+```
+
 **Task 2: Creating a New User and Group:**
 
 **1. Create New group:** 
@@ -62,6 +68,16 @@ sudo passwd hero
 
 The purpose of these actions is twofold. Firstly, it helps you understand how Linux handles access control and user management—a core aspect of system administration. Secondly, performing these tasks on an AWS EC2 instance introduces you to managing cloud-based Linux environments
 
+Now, generate another user account. It will be useful in the next exercises.
+```
+sudo useradd villain
+```
+As you see, now, we **do not** create home directory and our `villain` user is not a member of any group. 
+Now, set up a password for `villain` user and try not to forget it :)
+```
+sudo passwd villain
+```
+
 **Task 3: Working with Directories and Permissions**
 
 **1. Create a Directory and File:** 
@@ -75,17 +91,27 @@ mkdir hero_files
 echo "Hello there!" > hero_files/message.txt
 ```
 
-**Set Group Ownership and Permissions:**
-Change the ownership and permissions so only members of the `heroes` group can read and write to the directory.
+**See, if the message was successfuly written into the file:**
 
 ```
-sudo chown :heroes hero_files/
+cat hero_files/message.txt
+```
+
+You should be able to see the contents printed out without any issues.
+
+**Set Group Ownership and Permissions:**
+Now, change the ownership and permissions so only members of the `heroes` group can read and write to the directory.
+
+```
+sudo chown :heroes /tmp/hero_files/*
 ```
 Set permissions to allow read and write access to the file only for users in the `heroes` group.
 ```
-sudo chmod 770 hero_files/
-sudo chmod 660 hero_files/message.txt
+sudo chmod 775 hero_files/
+sudo chmod 664 hero_files/message.txt
 ```
+
+[Click here](https://docs.google.com/document/d/1n9jZLnFcnWGxdg5NoAnK22KBPZ4R1vKQb8iXc-Q3ew4) for for explanation on what these commands mean and what these permission codes do.
 
 **Summary**
 Now, you learned to manage file permissions and group ownership within your EC2 Linux environment, essential for controlling access to system resources.
@@ -94,10 +120,30 @@ You created a `hero_files/` directory and set its permissions and ownership to e
 
 **Task 4: Test the Access Control**
 
-Attempt to read and write to `message.txt` as a user not in the heroes group. You should be denied access in both cases:
+To validate the access control settings you've applied to the hero_files directory and its contents. This exercise ensures you understand how file permissions and group ownership affect file accessibility.
+
+1. First, switch to the `villain` user that we created before to test the access restrictions:
 ```
-cat /tmp/hero_files/message.txt # READ operation
-echo "New message" > /tmp/hero_files/message.txt # WRITE operation
+su - villain 
+```
+
+2. Try to access the hero_files directory:
+```
+cd /tmp/hero_files
+ls -l
+```
+**Expectation:** You should be able to list the directory contents because of the 770 permissions on hero_files, which allows read, write, and execute permissions for the owner and group but not for others.
+
+Attempt to write to `message.txt` as a user not in the heroes group.
+You should be denied access.
+```
+echo "New message" > /tmp/hero_files/message.txt
+```
+
+This operation should output something like this:
+
+```
+bash: message.txt: Permission denied
 ```
 
 **How do we solve this ?** 
@@ -106,9 +152,9 @@ First, we can switch now to the user which belongs to the `heroes` group:
 ```
 su - hero
 ```
-And try to access files. Do it now, and see what effect does it have on the command output. 
+And try to write message to the file again. Do it now, and see what effect does it have on the command output. 
 
-The **second** option is to add the current user to `heroes` group. By doing this, the user we are logged as in, will gain all the privileges that the `heroes` group has. 
+The **second** option is to add the current user to `heroes` group. By doing this, the user we specify, will gain all the privileges that the `heroes` group has. 
 Use the `whoami` command to display the current username.
 ```
 whoami
@@ -119,37 +165,51 @@ id
 Adding the current user to the heroes group will grant them the permissions associated with that group, specifically the ability to read and write to the message.txt file in the `/tmp/hero_files/` directory.
 
 **Add User to the Group:**
-Use the usermod command to add your current user to the heroes group. You'll need to replace <your-username> with the username you identified in Step 1.
+To be able to assign permissions and assign users to groups, the user we are signed in as, needs to have `superuser` priviledges. Neither `hero` nor `villain` is such a priviledged user. 
+The `superuser` is a special group (something like elite yacht club) where it's members can perform administrative tasks on Linux system. 
+We know, that our default user belongs to this club. 
+1. Log out from your current ssh session and log back in:
+```
+exit
+```
+```
+ssh -i "id_rsa" ubuntu@ec2-51-21-77-247.eu-north-1.compute.amazonaws.com
+```
+2. Now, we should be logged in as default user. We can perform the administrative tasks now. But let's instead invite our `hero` user to the elite `sudoers` group, which will grant it the same priviledges.
+Use the following command to add `hero` user to the sudo group:
+```
+sudo usermod -aG sudo hero
+```
+
+This is the same command that adds the specified user to the group, but this time the group is special.
+
+3. **Log out and log back in** to the EC2 instance. Unix-like systems do not apply group changes to active sessions. This means that if you added a user to a new group, the user must log out and then log back in for those changes to take effect in their session.
+4. Log in as `hero` user. Now, you have a power to invite `villain` user to any group you want. Let's invite `villain` to `heroes` group.
+Use the usermod command to add the `villain` user to the `heroes` group. You'll need to replace <your-username> with `villain` 
 ```
 sudo usermod -aG heroes <your-username>
+sudo usermod -aG heroes villain
+```
 
-```
-Note: The `-aG` option appends the user to the specified group without removing them from their existing groups.
-You can combine above command with the previous one, using `command substitution`
-
-```
-sudo usermod -aG heroes $(whoami)
-```
+**Note:** The `-aG` option appends the user to the specified group without removing them from their existing groups.
 
 **Verify and Test Access Again** :
 After adding your user to the heroes group, you need to log out and log back in for the group changes to take effect. This is necessary because the current session does not automatically refresh group memberships.
+
 **Log Out and Log In:**
 Depending on your environment, logging out and back in can be done through the GUI or by closing and reopening your terminal session.
 
+**Expectation** Now, you should be able to write to the `/tmp/hero_files/message.txt` without getting access denied error.
+
 **Verify Group Membership:**
+
+When logged in as `villain`, execute the command:
+
 ```
 id
 ```
 
-**Test File Access again**
-Attempt to read and write to message.txt again. Now that your user is part of the heroes group, you should have the necessary permissions
-
-```
-cat /tmp/hero_files/message.txt
-echo "New message" >> /tmp/hero_files/message.txt
-cat /tmp/hero_files/message.txt
-```
-To go further, see [the study material](https://docs.google.com/document/d/14oAojwZD8ULcECaUFB4dqbmuZb2K-c05tKXaKY1bZwk/edit?usp=sharing) for information why write and format in bash this way.
+That will give you a detailed list of which groups the current user belongs to.
 
 **Summary**
 You tested the effectiveness of Linux file permissions and group ownership by attempting to access the hero_files directory before and after adjusting your group membership.
@@ -160,10 +220,10 @@ By switching users and modifying group memberships, you experienced firsthand ho
 **Task 5: Setting Up SSH Access for the New User**
 
 **Objective**
-Learn how to configure SSH access for the newly created hero user on your AWS EC2 instance. 
+Learn how to configure SSH access for the newly created `hero` user on your AWS EC2 instance. 
 
 **1 Generating SSH Keys (on your local machine):**
-First, you need to generate a new SSH key pair to use for hero. Open a terminal and run:
+First, you need to generate a new SSH key pair to use for hero. Open a terminal on your computer (not inside EC2 instance) and run:
 
 ```
 ssh-keygen -t rsa -b 4096 -f ~/.ssh/hero_key
@@ -171,8 +231,9 @@ ssh-keygen -t rsa -b 4096 -f ~/.ssh/hero_key
 
 This command creates a new SSH key pair stored in the `~/.ssh/hero_key` (private key) and `~/.ssh/hero_key.pub` (public key) files.
 
+
 **2. Uploading the Public Key to Your EC2 Instance**
-To allow hero to log in via SSH, you must add the public key to the ~/.ssh/authorized_keys file in the hero user's home directory on your EC2 instance.
+To allow hero to log in via SSH, you must add the public key to the `~/.ssh/authorized_keys` file in the hero user's home directory on your EC2 instance.
 
 1. SSH into your EC2 instance using your regular method (e.g., as ec2-user).
 2. Switch to the hero user:
@@ -191,7 +252,7 @@ mkdir ~/.shh
 ```
 5. Append the public key to the `~/.ssh/authorized_keys` file. Replace your_public_key with the content of your hero_key.pub file. First, copy the contents of your public key (from your local machine):
 ```
-cat ~/.ssh/id_rsa.pub
+cat ~/.ssh/hero_key.pub
 ```
 the name of the key may be different, but it will be `.pub` file for sure.
 6. Put the content of your public key into `authorized_keys` file on your EC2
