@@ -299,11 +299,12 @@ ssh -i ~/.ssh/hero_key hero@Your-Instance-IP
 ```
 Ensure you replace Your-Instance-IP with the actual public IP of your EC2 instance.
 
-**Task:** Understand why it's crucial to run certain scripts with superuser privileges, especially when modifying system settings or managing user accounts. 
-Before going further, see [the study material](https://docs.google.com/document/d/1gMYi7TxPrvmNcBsFKtygX6Sy0uiidkMfSDDO8XnX0kk/edit?usp=sharing).
-
 **2 2. Creating the Script:**
-Open vim to start writing your script:
+You will be creating new file here. Check what is your current directory after you logged in:
+```
+pwd
+```
+When you are ready, ppen vim to start writing your script. To do it, we use this command:
 
 ```
 vim ec2_manager.sh
@@ -315,17 +316,29 @@ Start your script with the shebang line and set it to execute using Bash:
 ```
 #!/bin/bash
 ```
-Shebang (#!): Is the first line in your script, telling the system which interpreter to use to execute the script. For shell scripts, this is typically #!/bin/bash or #!/usr/bin/env bash Here you have everything explained about it:
+Shebang (#!): Is the first line in your script, telling the system which interpreter to use to execute the script. For shell scripts, this is typically `#!/bin/bash` or `#!/usr/bin/env bash` Here you have everything explained about it:
 [Shebang Explained.](https://docs.google.com/document/d/1xOhWo0Wz0ur-8l34e8K4DtKxyQ8dyvVNinGC7kgSF5U/)
 
+**2. Save your changes and exit vim** To do this, click on `esc` and type `:wq`
 **2. Make your script executable:**
+After you exited the `vim` terminal, change the mode of your new script. Make it executable by running:
 
 ```
 chmod +x ec2_manager.sh.
 ```
 
+**3. Run the script**
+You can test the script by running:
+
+```
+./ec2_manager.sh
+```
+
+You won't see anything now, but when you will be gradually building the script, it will eventually change.
+
 **3. Implementing the Menu:** 
-Use the `echo` command to print each option to the terminal. The `echo` command in shell scripting is used to display lines of text or string variables. It's one of the most basic and frequently used commands in shell scripting. After displaying each option, you'll want to capture the user's choice. This is done using the `read` command, which reads a single line from standard input (i.e., the user's keyboard input) and assigns it to a variable. In this case, you could use read -p `"Enter choice: "` choice to prompt the user directly and store their input in a variable named `choice`
+Fire up the script once again.
+Use the `echo` command to print options to the terminal. The `echo` command in shell scripting is used to display lines of text or string variables. It's one of the most basic and frequently used commands in shell scripting. After displaying each option, you'll want to capture the user's choice. This is done using the `read` command, which reads a single line from standard input (i.e., the user's keyboard input) and assigns it to a variable. In this case, you could use read -p `"Enter choice: "` choice to prompt the user directly and store their input in a variable named `choice`
 
 ```
 echo "Select an operation:"
@@ -336,7 +349,7 @@ read -p "Enter choice: " choice
 ```
 
 **4. Run the script**
-Verify it prompts the user for input. Fire it up several times. Test out each option. For now, it does not do anything.
+Verify it prompts the user for input. Fire it up several times. Test out each option. For now, it does not do anything. Implementing the actual features will be the next step.
 
 **5. Processing User Input:**
 Now, we will be adding the required features for each of the options that user may choose. The `if` conditional lets us specify the condition under which the code will run. We will test it out, by covering the case where the user types in 1, choosing from the menu above.
